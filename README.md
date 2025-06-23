@@ -1,2 +1,1 @@
-# project-updates
-Projects for CiOS by CiEVERSE by Ci ENTERPRISES & Ci ENTERPRISES
+# Workstreams and projects development of CiEVERSE by Ci ENTERPRISES and Ci ENTERPIRSES
