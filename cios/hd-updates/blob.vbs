@@ -1,7 +1,7 @@
 Option Explicit
 
 ' Registry Path
-Const RegPath = "HKLM\Software\Policies\Google\chrome\URLAllowlist"
+Const RegPath = "HKLM\Software\Policies\Microsoft\Edge\URLAllowlist"
 
 ' String Value Names and Data
 Dim ValueNames(3), ValueData(3)
