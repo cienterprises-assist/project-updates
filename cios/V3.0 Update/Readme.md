@@ -11,13 +11,14 @@ Winget Removal
 Antivirus : By Default the Defender Exclusions for Folders like System32, Temp, Program Files, Program Files (x86) to run the rust exe to merge website values
 
 Base Browser Programming Change
+
     Chrome : Only Basic Things Ready, For            
           Zoho mail it's by default enabled but
           not accounts.zoho.in so that users 
           unable to logout and login with
           different account. Similarly for any
           other user specific mails, But to make 
-          sure only web mail
+          sure only web mail and login logout permission revocation
    
       Edge : Only For Support, Zoho Assist will 
             optionally enabled by using iwr iex 
