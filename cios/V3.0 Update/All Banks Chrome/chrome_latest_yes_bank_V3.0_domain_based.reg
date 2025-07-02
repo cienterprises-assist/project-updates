@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\URLAllowlist]
+"501"="yescollect.yesbank.in"
+"601"="retailloans.yes.in"
+"602"="retailloans.yesbank.in"
+

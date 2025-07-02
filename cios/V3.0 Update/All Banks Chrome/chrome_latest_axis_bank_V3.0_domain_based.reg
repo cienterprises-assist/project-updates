@@ -1,0 +1,15 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\URLAllowlist]
+"501"="axisallocation.axisbank.co.in"
+"601"="collections.axisbank.co.in"
+"701"="tap.tcsapps.com"
+"801"="pcccollections.axisbank.co.in"
+"802"="login.microsoftonline.com"
+"803"="login.live.com"
+"804"="adfs.axisbank.com"
+"805"="adselfservice.axisbank.com"
+"806"="mysignins.microsoft.com"
+
+
+

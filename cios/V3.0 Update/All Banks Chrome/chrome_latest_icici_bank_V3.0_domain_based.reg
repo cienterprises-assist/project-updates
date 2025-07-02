@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\URLAllowlist]
+"501"="neocaps.icicibank.com"
+"502"="neocollections.icicibank.com"
+"503"="omnidocs.icicibank.com"
+"601"="dsmg-optimus.com"
+"701"="ibox-vsts.icicibank.com"
+"801"="icicibankltd.lms.getvymo.com"
+"901"="filesecure.icicibank.com"
+"1001"="emsigner.com"
+"1002"="in.emsigner.com"
