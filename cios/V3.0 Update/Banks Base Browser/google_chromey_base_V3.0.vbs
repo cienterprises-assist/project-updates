@@ -2,11 +2,11 @@ Option Explicit
 
 ' Registry Paths
 Const RegPathChrome = "HKLM\SOFTWARE\Policies\Google\Chrome\"
-Const RegPathURLAllowlist = "HKLM\SOFTWARE\Policies\Google\Chrome\URLAllowlist"
-Const RegPathURLBlocklist = "HKLM\SOFTWARE\Policies\Google\Chrome\URLBlocklist"
+Const RegPathURLAllowlist = "HKLM\SOFTWARE\Policies\Google\Chrome\URLAllowlist\"
+Const RegPathURLBlocklist = "HKLM\SOFTWARE\Policies\Google\Chrome\URLBlocklist\"
 
 ' DWORD Value Names and Data for Chrome Settings
-Dim ChromeValueNames(9), ChromeValueData(9)
+Dim ChromeValueNames(8), ChromeValueData(8)
 ChromeValueNames(0) = "BrowserSignin"
 ChromeValueData(0) = 0
 ChromeValueNames(1) = "SyncDisabled"
@@ -148,23 +148,24 @@ AllowlistValueNames(58) = "59"
 AllowlistValueData(58) = "googleusercontent.com"
 AllowlistValueNames(59) = "301"
 AllowlistValueData(59) = "mail.zoho.in"
-AllowlistValueNames(60) = "303"
-AllowlistValueData(60) = "zmdownload-accl.zoho.in"
-AllowlistValueNames(61) = "304"
-AllowlistValueData(61) = "zmdownloadfree-accl.zoho.in"
+AllowlistValueNames(60) = "302"
+AllowlistValueData(60) = "accounts.zoho.in"
+AllowlistValueNames(61) = "303"
+AllowlistValueData(61) = "zmdownload-accl.zoho.in"
+AllowlistValueNames(62) = "304"
+AllowlistValueData(62) = "zmdownloadfree-accl.zoho.in"
 
 ' String Value Names and Data for URLBlocklist
-Dim BlocklistValueNames(1), BlocklistValueData(1)
+Dim BlocklistValueNames(0), BlocklistValueData(0)
 BlocklistValueNames(0) = "1"
 BlocklistValueData(0) = "*"
 
 ' Function to write DWORD to the registry
 Sub WriteRegistryDWORD(Path, ValueName, ValueData)
     On Error Resume Next
-    Dim WSHShell, RegKeyPath
+    Dim WSHShell
     Set WSHShell = CreateObject("WScript.Shell")
-    RegKeyPath = Path & ValueName
-    WSHShell.RegWrite RegKeyPath, ValueData, "REG_DWORD"
+    WSHShell.RegWrite Path & ValueName, ValueData, "REG_DWORD"
     If Err.Number <> 0 Then
         WScript.Echo "Error writing DWORD to registry: " & Err.Description
     End If
@@ -175,10 +176,9 @@ End Sub
 ' Function to write string to the registry
 Sub WriteRegistryString(Path, ValueName, ValueData)
     On Error Resume Next
-    Dim WSHShell, RegKeyPath
+    Dim WSHShell
     Set WSHShell = CreateObject("WScript.Shell")
-    RegKeyPath = Path & ValueName
-    WSHShell.RegWrite RegKeyPath, ValueData, "REG_SZ"
+    WSHShell.RegWrite Path & ValueName, ValueData, "REG_SZ"
     If Err.Number <> 0 Then
         WScript.Echo "Error writing string to registry: " & Err.Description
     End If
@@ -189,18 +189,18 @@ End Sub
 ' Main script execution
 Dim i
 
-' Write Chrome settings
-For i = 0 to UBound(ChromeValueNames)
+' Write Chrome settings (DWORD values)
+For i = 0 To UBound(ChromeValueNames)
     WriteRegistryDWORD RegPathChrome, ChromeValueNames(i), ChromeValueData(i)
 Next
 
-' Write URLAllowlist
-For i = 0 to UBound(AllowlistValueNames)
+' Write URLAllowlist (string values)
+For i = 0 To UBound(AllowlistValueNames)
     WriteRegistryString RegPathURLAllowlist, AllowlistValueNames(i), AllowlistValueData(i)
 Next
 
-' Write URLBlocklist
-For i = 0 to UBound(BlocklistValueNames)
+' Write URLBlocklist (string values)
+For i = 0 To UBound(BlocklistValueNames)
     WriteRegistryString RegPathURLBlocklist, BlocklistValueNames(i), BlocklistValueData(i)
 Next
 
