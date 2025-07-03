@@ -14,7 +14,7 @@ $downloadedFiles = @()
 function Log-Message {
     param ($Message)
     $log.WriteLine("$(Get-Date): $Message")
-    $log.Flush() # Ensure log is written immediately
+    $log.Flush()
 }
 
 function Show-Popup {
@@ -52,6 +52,9 @@ function Download-And-Execute-VBS {
         Invoke-WebRequest -Uri $Url -OutFile $path -ErrorAction Stop
         Log-Message "Downloaded $FileName to $path"
         $downloadedFiles += $path
+        if (-not (Test-Path $path)) {
+            throw "Downloaded file $FileName not found"
+        }
         Log-Message "Executing $FileName"
         Start-Process -FilePath "wscript.exe" -ArgumentList "`"$path`"" -Wait -ErrorAction Stop
         Log-Message "Successfully executed $FileName"
@@ -107,18 +110,16 @@ function Move-To-Wallpaper-Folder {
 function Set-Desktop-Wallpaper {
     param ($Path, $UserSid, $Username)
     try {
-        Log-Message "Loading user profile for $Username ($UserSid)"
-        # Preload user registry hive
+        Log-Message "Setting desktop wallpaper for $Username ($UserSid)"
         $regKey = "HKU:\$UserSid\Control Panel\Desktop"
         New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS -ErrorAction Stop | Out-Null
         if (-not (Test-Path $regKey)) {
-            Log-Message "Registry key $regKey not found, attempting to load hive"
-            Start-Process -FilePath "reg" -ArgumentList "load HKU\$UserSid C:\Users\$Username\NTUSER.DAT" -Wait -ErrorAction Stop
+            Log-Message "Registry key $regKey not found for $Username"
+            throw "User profile not loaded"
         }
         Set-ItemProperty -Path $regKey -Name Wallpaper -Value $Path -ErrorAction Stop
         Set-ItemProperty -Path $regKey -Name WallpaperStyle -Value 2 -ErrorAction Stop
         Set-ItemProperty -Path $regKey -Name TileWallpaper -Value 0 -ErrorAction Stop
-        # Force wallpaper refresh
         Start-Process -FilePath "RUNDLL32.EXE" -ArgumentList "user32.dll,UpdatePerUserSystemParameters" -Wait -ErrorAction Stop
         Log-Message "Set desktop wallpaper to $Path for user $Username ($UserSid)"
         Show-Popup "Desktop wallpaper set to $Path for $Username" "Wallpaper Set"
@@ -170,22 +171,22 @@ function Configure-LockScreen-Settings {
 
 function Set-ScreenLock {
     try {
-        # Set screen saver and lock settings for all users
         $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
         if (-not (Test-Path $regPath)) {
             New-Item -Path $regPath -Force -ErrorAction Stop | Out-Null
         }
-        # Set inactivity timeout to 180 seconds (3 minutes)
         Set-ItemProperty -Path $regPath -Name InactivityTimeoutSecs -Value 180 -ErrorAction Stop
-        # Set screen saver settings for current user and default profile
         Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaveTimeOut -Value 180 -ErrorAction Stop
         Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaveActive -Value 1 -ErrorAction Stop
         Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaverIsSecure -Value 1 -ErrorAction Stop
         Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name ScreenSaveTimeOut -Value 180 -ErrorAction Stop
         Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name ScreenSaveActive -Value 1 -ErrorAction Stop
         Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name ScreenSaverIsSecure -Value 1 -ErrorAction Stop
-        # Ensure password is required
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop" -Name ScreenSaverIsSecure -Value 1 -ErrorAction Stop
+        $desktopRegPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop"
+        if (-not (Test-Path $desktopRegPath)) {
+            New-Item -Path $desktopRegPath -Force -ErrorAction Stop | Out-Null
+        }
+        Set-ItemProperty -Path $desktopRegPath -Name ScreenSaverIsSecure -Value 1 -ErrorAction Stop
         Log-Message "Configured screen to lock after 3 minutes with password"
         Show-Popup "Screen lock set to 3 minutes with password" "Screen Lock Set"
         Add-Delay
@@ -221,7 +222,6 @@ function Delete-Folders {
         $path = "C:\Windows\Web\$folder"
         try {
             if (Test-Path $path) {
-                # Strong deletion with retry
                 $retryCount = 0
                 $maxRetries = 3
                 while ($retryCount -lt $maxRetries) {
@@ -286,6 +286,11 @@ function Cleanup-TempFiles {
 # Check admin privileges
 Check-Admin
 
+# Set full names for users
+Set-UserFullName -Username "User" -FullName "System Operator (SysOp)"
+Set-UserFullName -Username "Agency" -FullName "Admin"
+Set-UserFullName -Username "Jarvis" -FullName "SU;CYBERINFORMATICS:JARVIS"
+
 # Execute VBS scripts
 $vbsScripts = @(
     @{
@@ -310,15 +315,12 @@ foreach ($script in $vbsScripts) {
     Download-And-Execute-VBS -Url $script.Url -FileName $script.FileName
 }
 
-# Set full name for User
-Set-UserFullName -Username "User" -FullName "System Operator (SysOp)"
-
 # Download and set wallpapers
 $userWallpaper = Download-Wallpaper -Url "https://dl.cieverse.com/cios/V3.0 Update/CiE Walls/CiOS Desktop MARK-X User PANEL .png" -FileName "CiOS Desktop MARK-X User PANEL .png"
 if ($userWallpaper) {
     $userWallpaperPath = Move-To-Wallpaper-Folder -SourcePath $userWallpaper -FileName "CiOS Desktop MARK-X User PANEL .png"
     if ($userWallpaperPath) {
-        Set-Desktop-Wallpaper -Path $userWallpaperPath -UserSid "S-1-5-21-2296551787-2341494431-3366209023-1001" -Username "User"
+        Set-Desktop-Wallpaper -Path $userWallpaperPath -UserSid "S-1-5-21-2296551787-2341494431-3366209023-1002" -Username "User"
     }
 }
 
@@ -326,8 +328,8 @@ $adminWallpaper = Download-Wallpaper -Url "https://dl.cieverse.com/cios/V3.0 Upd
 if ($adminWallpaper) {
     $adminWallpaperPath = Move-To-Wallpaper-Folder -SourcePath $adminWallpaper -FileName "CiOS Desktop MARK-X Admin PANEL .png"
     if ($adminWallpaperPath) {
-        Set-Desktop-Wallpaper -Path $adminWallpaperPath -UserSid "S-1-5-21-2296551787-2341494431-3366209023-1002" -Username "Agency"
-        Set-Desktop-Wallpaper -Path $adminWallpaperPath -UserSid "S-1-5-21-2296551787-2341494431-3366209023-1005" -Username "Jarvis"
+        Set-Desktop-Wallpaper -Path $adminWallpaperPath -UserSid "S-1-5-21-2296551787-2341494431-3366209023-1001" -Username "Agency"
+        Set-Desktop-Wallpaper -Path $adminWallpaperPath -UserSid "S-1-5-21-2296551787-2341494431-3366209023-500" -Username "Jarvis"
     }
 }
 
