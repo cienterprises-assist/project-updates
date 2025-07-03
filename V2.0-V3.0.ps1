@@ -14,12 +14,24 @@ $downloadedFiles = @()
 function Log-Message {
     param ($Message)
     $log.WriteLine("$(Get-Date): $Message")
+    $log.Flush() # Ensure log is written immediately
 }
 
 function Show-Popup {
     param ($Message, $Title = "Task Completed", $Icon = 64)
-    $wshell = New-Object -ComObject Wscript.Shell
-    $wshell.Popup($Message, 0, $Title, $Icon)
+    try {
+        $wshell = New-Object -ComObject Wscript.Shell
+        $wshell.Popup($Message, 0, $Title, $Icon)
+        Log-Message "Displayed popup: $Title - $Message"
+    } catch {
+        Log-Message "Error displaying popup: $_"
+    }
+}
+
+function Add-Delay {
+    param ($Seconds = 5)
+    Log-Message "Adding delay of $Seconds seconds"
+    Start-Sleep -Seconds $Seconds
 }
 
 function Check-Admin {
@@ -36,14 +48,17 @@ function Download-And-Execute-VBS {
     param ($Url, $FileName)
     $path = Join-Path $tempFolder $FileName
     try {
-        Invoke-WebRequest -Uri $Url -OutFile $path
+        Log-Message "Downloading $FileName from $Url"
+        Invoke-WebRequest -Uri $Url -OutFile $path -ErrorAction Stop
         Log-Message "Downloaded $FileName to $path"
         $downloadedFiles += $path
-        Start-Process -FilePath "wscript.exe" -ArgumentList "`"$path`"" -Wait
-        Log-Message "Executed $FileName"
+        Log-Message "Executing $FileName"
+        Start-Process -FilePath "wscript.exe" -ArgumentList "`"$path`"" -Wait -ErrorAction Stop
+        Log-Message "Successfully executed $FileName"
         Show-Popup "Successfully executed $FileName" "VBS Execution"
+        Add-Delay
     } catch {
-        Log-Message "Error with $FileName : $_"
+        Log-Message "Error with $FileName: $_"
         Show-Popup "Error with $FileName. Check log at: $logPath" "Error" 48
     }
 }
@@ -52,12 +67,14 @@ function Download-Wallpaper {
     param ($Url, $FileName)
     $path = Join-Path $tempFolder $FileName
     try {
-        Invoke-WebRequest -Uri $Url -OutFile $path
+        Log-Message "Downloading wallpaper $FileName from $Url"
+        Invoke-WebRequest -Uri $Url -OutFile $path -ErrorAction Stop
         Log-Message "Downloaded $FileName to $path"
         $downloadedFiles += $path
+        Add-Delay
         return $path
     } catch {
-        Log-Message "Error downloading $FileName : $_"
+        Log-Message "Error downloading $FileName: $_"
         Show-Popup "Error downloading $FileName. Check log at: $logPath" "Error" 48
         return $null
     }
@@ -69,14 +86,19 @@ function Move-To-Wallpaper-Folder {
     $destPath = Join-Path $destFolder $FileName
     try {
         if (-not (Test-Path $destFolder)) {
-            New-Item -Path $destFolder -ItemType Directory -Force | Out-Null
+            New-Item -Path $destFolder -ItemType Directory -Force -ErrorAction Stop | Out-Null
             Log-Message "Created folder $destFolder"
         }
-        Move-Item -Path $SourcePath -Destination $destPath -Force
+        if (Test-Path $destPath) {
+            Remove-Item -Path $destPath -Force -ErrorAction Stop
+            Log-Message "Overwrote existing wallpaper $FileName"
+        }
+        Move-Item -Path $SourcePath -Destination $destPath -Force -ErrorAction Stop
         Log-Message "Moved $FileName to $destPath"
+        Add-Delay
         return $destPath
     } catch {
-        Log-Message "Error moving $FileName : $_"
+        Log-Message "Error moving $FileName: $_"
         Show-Popup "Error moving $FileName. Check log at: $logPath" "Error" 48
         return $null
     }
@@ -85,18 +107,27 @@ function Move-To-Wallpaper-Folder {
 function Set-Desktop-Wallpaper {
     param ($Path, $UserSid, $Username)
     try {
+        Log-Message "Loading user profile for $Username ($UserSid)"
+        # Preload user registry hive
         $regKey = "HKU:\$UserSid\Control Panel\Desktop"
-        New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS | Out-Null
-        Set-ItemProperty -Path $regKey -Name Wallpaper -Value $Path
-        Set-ItemProperty -Path $regKey -Name WallpaperStyle -Value 2
-        Set-ItemProperty -Path $regKey -Name TileWallpaper -Value 0
+        New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS -ErrorAction Stop | Out-Null
+        if (-not (Test-Path $regKey)) {
+            Log-Message "Registry key $regKey not found, attempting to load hive"
+            Start-Process -FilePath "reg" -ArgumentList "load HKU\$UserSid C:\Users\$Username\NTUSER.DAT" -Wait -ErrorAction Stop
+        }
+        Set-ItemProperty -Path $regKey -Name Wallpaper -Value $Path -ErrorAction Stop
+        Set-ItemProperty -Path $regKey -Name WallpaperStyle -Value 2 -ErrorAction Stop
+        Set-ItemProperty -Path $regKey -Name TileWallpaper -Value 0 -ErrorAction Stop
+        # Force wallpaper refresh
+        Start-Process -FilePath "RUNDLL32.EXE" -ArgumentList "user32.dll,UpdatePerUserSystemParameters" -Wait -ErrorAction Stop
         Log-Message "Set desktop wallpaper to $Path for user $Username ($UserSid)"
         Show-Popup "Desktop wallpaper set to $Path for $Username" "Wallpaper Set"
+        Add-Delay
     } catch {
-        Log-Message "Error setting desktop wallpaper for $Username ($UserSid) : $_"
+        Log-Message "Error setting desktop wallpaper for $Username ($UserSid): $_"
         Show-Popup "Error setting desktop wallpaper for $Username. Check log at: $logPath" "Error" 48
     } finally {
-        Remove-PSDrive -Name HKU
+        Remove-PSDrive -Name HKU -ErrorAction SilentlyContinue
     }
 }
 
@@ -105,13 +136,14 @@ function Set-LockScreen-Wallpaper {
     try {
         $regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
         if (-not (Test-Path $regPath)) {
-            New-Item -Path $regPath -Force | Out-Null
+            New-Item -Path $regPath -Force -ErrorAction Stop | Out-Null
         }
-        Set-ItemProperty -Path $regPath -Name LockScreenImage -Value $Path
+        Set-ItemProperty -Path $regPath -Name LockScreenImage -Value $Path -ErrorAction Stop
         Log-Message "Set lock screen wallpaper to $Path"
         Show-Popup "Lock screen wallpaper set to $Path" "Lock Screen Set"
+        Add-Delay
     } catch {
-        Log-Message "Error setting lock screen wallpaper : $_"
+        Log-Message "Error setting lock screen wallpaper: $_"
         Show-Popup "Error setting lock screen wallpaper. Check log at: $logPath" "Error" 48
     }
 }
@@ -120,39 +152,45 @@ function Configure-LockScreen-Settings {
     try {
         $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP"
         if (-not (Test-Path $regPath)) {
-            New-Item -Path $regPath -Force | Out-Null
+            New-Item -Path $regPath -Force -ErrorAction Stop | Out-Null
         }
-        Set-ItemProperty -Path $regPath -Name LockScreenImageStatus -Value 1
-        Set-ItemProperty -Path $regPath -Name LockScreenImagePath -Value "C:\Windows\Web\Ci_Walls_MarkX-V3.0\CiOS Lock MARK-X V3.0 Universal ADMIN-USER PANEL.png"
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name NoLockScreenCamera -Value 1
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name NoLockScreenSlideshow -Value 1
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\Creative" -Name LockImageFlags -Value 1
+        Set-ItemProperty -Path $regPath -Name LockScreenImageStatus -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path $regPath -Name LockScreenImagePath -Value "C:\Windows\Web\Ci_Walls_MarkX-V3.0\CiOS Lock MARK-X V3.0 Universal ADMIN-USER PANEL.png" -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name NoLockScreenCamera -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name NoLockScreenSlideshow -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\Creative" -Name LockImageFlags -Value 1 -ErrorAction Stop
         Log-Message "Configured lock screen settings"
         Show-Popup "Lock screen settings configured" "Lock Screen Settings"
+        Add-Delay
     } catch {
-        Log-Message "Error configuring lock screen settings : $_"
+        Log-Message "Error configuring lock screen settings: $_"
         Show-Popup "Error configuring lock screen settings. Check log at: $logPath" "Error" 48
     }
 }
 
 function Set-ScreenLock {
     try {
+        # Set screen saver and lock settings for all users
         $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
         if (-not (Test-Path $regPath)) {
-            New-Item -Path $regPath -Force | Out-Null
+            New-Item -Path $regPath -Force -ErrorAction Stop | Out-Null
         }
-        # Set screen saver timeout to 180 seconds (3 minutes)
-        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaveTimeOut -Value 180
-        # Enable screen saver
-        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaveActive -Value 1
-        # Require password on wake
-        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaverIsSecure -Value 1
-        # Ensure lock on inactivity
-        Set-ItemProperty -Path $regPath -Name InactivityTimeoutSecs -Value 180
+        # Set inactivity timeout to 180 seconds (3 minutes)
+        Set-ItemProperty -Path $regPath -Name InactivityTimeoutSecs -Value 180 -ErrorAction Stop
+        # Set screen saver settings for current user and default profile
+        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaveTimeOut -Value 180 -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaveActive -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name ScreenSaverIsSecure -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name ScreenSaveTimeOut -Value 180 -ErrorAction Stop
+        Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name ScreenSaveActive -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name ScreenSaverIsSecure -Value 1 -ErrorAction Stop
+        # Ensure password is required
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop" -Name ScreenSaverIsSecure -Value 1 -ErrorAction Stop
         Log-Message "Configured screen to lock after 3 minutes with password"
         Show-Popup "Screen lock set to 3 minutes with password" "Screen Lock Set"
+        Add-Delay
     } catch {
-        Log-Message "Error configuring screen lock : $_"
+        Log-Message "Error configuring screen lock: $_"
         Show-Popup "Error configuring screen lock. Check log at: $logPath" "Error" 48
     }
 }
@@ -166,12 +204,13 @@ function Set-UserFullName {
             $user.Put() | Out-Null
             Log-Message "Set full name for $Username to $FullName"
             Show-Popup "Full name set for $Username to $FullName" "User Full Name Set"
+            Add-Delay
         } else {
             Log-Message "User $Username not found"
             Show-Popup "User $Username not found" "Error" 48
         }
     } catch {
-        Log-Message "Error setting full name for $Username : $_"
+        Log-Message "Error setting full name for $Username: $_"
         Show-Popup "Error setting full name for $Username. Check log at: $logPath" "Error" 48
     }
 }
@@ -182,15 +221,31 @@ function Delete-Folders {
         $path = "C:\Windows\Web\$folder"
         try {
             if (Test-Path $path) {
-                Remove-Item -Path $path -Recurse -Force -ErrorAction Stop
+                # Strong deletion with retry
+                $retryCount = 0
+                $maxRetries = 3
+                while ($retryCount -lt $maxRetries) {
+                    try {
+                        Remove-Item -Path $path -Recurse -Force -ErrorAction Stop
+                        break
+                    } catch {
+                        $retryCount++
+                        Log-Message "Retry $retryCount/$maxRetries for deleting $folder: $_"
+                        Start-Sleep -Seconds 2
+                    }
+                }
+                if (Test-Path $path) {
+                    throw "Failed to delete $folder after $maxRetries attempts"
+                }
                 Log-Message "Successfully deleted folder $path"
                 Show-Popup "Deleted folder $folder" "Folder Deletion"
             } else {
                 Log-Message "Folder $path not found"
                 Show-Popup "Folder $folder not found" "Information" 64
             }
+            Add-Delay
         } catch {
-            Log-Message "Error deleting $folder : $_"
+            Log-Message "Error deleting $folder: $_"
             Show-Popup "Error deleting $folder. Check log at: $logPath" "Error" 48
         }
     }
@@ -198,16 +253,32 @@ function Delete-Folders {
 
 function Cleanup-TempFiles {
     try {
+        Log-Message "Starting cleanup of temporary files"
         foreach ($file in $downloadedFiles) {
             if (Test-Path $file) {
-                Remove-Item -Path $file -Force -ErrorAction Stop
-                Log-Message "Deleted temporary file $file"
+                $retryCount = 0
+                $maxRetries = 3
+                while ($retryCount -lt $maxRetries) {
+                    try {
+                        Remove-Item -Path $file -Force -ErrorAction Stop
+                        Log-Message "Deleted temporary file $file"
+                        break
+                    } catch {
+                        $retryCount++
+                        Log-Message "Retry $retryCount/$maxRetries for deleting $file: $_"
+                        Start-Sleep -Seconds 2
+                    }
+                }
+                if (Test-Path $file) {
+                    Log-Message "Failed to delete $file after $maxRetries attempts"
+                }
             }
         }
         Log-Message "Cleanup of temporary files completed"
         Show-Popup "Cleaned up temporary files" "Cleanup Completed"
+        Add-Delay
     } catch {
-        Log-Message "Error during cleanup : $_"
+        Log-Message "Error during cleanup: $_"
         Show-Popup "Error during cleanup. Check log at: $logPath" "Error" 48
     }
 }
