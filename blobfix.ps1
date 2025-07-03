@@ -21,7 +21,7 @@ if (-not $isAdmin) {
 Write-Log "Running with administrative privileges."
 
 # Define URLs and paths
-$vbsUrl = "https://dl.cieverse.com/cios/MarkX-V2.0/blob.vbs"
+$vbsUrl = "https://dl.cieverse.com/cios/MarkX-V2.0 Fixes/blob.vbs"
 $tempDir = $env:TEMP
 $vbsPath = Join-Path $tempDir "blob.vbs"
 $scriptPath = $PSCommandPath
