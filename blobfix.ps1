@@ -1,5 +1,5 @@
 # blobfix.ps1
-# Purpose: Download and execute blob.vbs using wscript.exe, clean up after VBS popup is closed
+# Purpose: Download and execute blob.vbs using wscript.exe, clean up after VBS popup with robust deletion
 
 # Initialize logging
 $logFile = Join-Path $env:TEMP "blobfix_log.txt"
@@ -59,15 +59,28 @@ catch {
 }
 
 # Clean up: delete VBS and PS1 files after VBS popup is closed
-Write-Log "Cleaning up files: $vbsPath, $scriptPath."
+Write-Log "Starting cleanup."
 try {
-    Remove-Item -Path $vbsPath -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path $scriptPath -Force -ErrorAction SilentlyContinue
-    Write-Log "Cleanup completed."
+    # Delete blob.vbs if it exists
+    if (Test-Path $vbsPath) {
+        Remove-Item -Path $vbsPath -Force -ErrorAction Stop
+        Write-Log "Deleted VBS file: $vbsPath."
+    } else {
+        Write-Log "VBS file already deleted or not found: $vbsPath."
+    }
+
+    # Delete blobfix.ps1 using a delayed command to avoid self-deletion issues
+    if ($scriptPath -and (Test-Path $scriptPath)) {
+        $deleteCommand = "Start-Sleep -Milliseconds 1000; Remove-Item -Path `"$scriptPath`" -Force"
+        Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"$deleteCommand`"" -NoNewWindow
+        Write-Log "Scheduled deletion of script: $scriptPath."
+    } else {
+        Write-Log "Script path invalid or already deleted: $scriptPath."
+    }
 }
 catch {
-    Write-Warning "Failed to delete temporary files: $_"
-    Write-Log "Warning: Failed to delete files: $_"
+    Write-Warning "Cleanup error: $_"
+    Write-Log "Warning: Cleanup error: $_"
 }
 
 Write-Log "Script completed."
