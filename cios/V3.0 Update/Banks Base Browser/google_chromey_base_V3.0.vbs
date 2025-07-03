@@ -6,7 +6,7 @@ Const RegPathURLAllowlist = "HKLM\SOFTWARE\Policies\Google\Chrome\URLAllowlist"
 Const RegPathURLBlocklist = "HKLM\SOFTWARE\Policies\Google\Chrome\URLBlocklist"
 
 ' DWORD Value Names and Data for Chrome Settings
-Dim ChromeValueNames(8), ChromeValueData(8)
+Dim ChromeValueNames(9), ChromeValueData(9)
 ChromeValueNames(0) = "BrowserSignin"
 ChromeValueData(0) = 0
 ChromeValueNames(1) = "SyncDisabled"
@@ -27,7 +27,7 @@ ChromeValueNames(8) = "SearchSuggestEnabled"
 ChromeValueData(8) = 0
 
 ' String Value Names and Data for URLAllowlist
-Dim AllowlistValueNames(58), AllowlistValueData(58)
+Dim AllowlistValueNames(62), AllowlistValueData(62)
 AllowlistValueNames(0) = "1"
 AllowlistValueData(0) = "privacy-sandbox-dialog"
 AllowlistValueNames(1) = "2"
@@ -148,15 +148,13 @@ AllowlistValueNames(58) = "59"
 AllowlistValueData(58) = "googleusercontent.com"
 AllowlistValueNames(59) = "301"
 AllowlistValueData(59) = "mail.zoho.in"
-AllowlistValueNames(60) = "302"
-AllowlistValueData(60) = "accounts.zoho.in"
-AllowlistValueNames(61) = "303"
-AllowlistValueData(61) = "zmdownload-accl.zoho.in"
-AllowlistValueNames(62) = "304"
-AllowlistValueData(62) = "zmdownloadfree-accl.zoho.in"
+AllowlistValueNames(60) = "303"
+AllowlistValueData(60) = "zmdownload-accl.zoho.in"
+AllowlistValueNames(61) = "304"
+AllowlistValueData(61) = "zmdownloadfree-accl.zoho.in"
 
 ' String Value Names and Data for URLBlocklist
-Dim BlocklistValueNames(0), BlocklistValueData(0)
+Dim BlocklistValueNames(1), BlocklistValueData(1)
 BlocklistValueNames(0) = "1"
 BlocklistValueData(0) = "*"
 
