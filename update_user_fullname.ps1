@@ -13,7 +13,7 @@ if (-not $isAdmin) {
 
 # Set up variables
 $tempFolder = $env:TEMP
-$vbsUrl = "https://dl.cieverse.com/cios/V3.0 update/update_user_fullname.vbs"
+$vbsUrl = "https://dl.cieverse.com/cios/V3.0 Update/update_user_fullname.vbs"
 $vbsFileName = "update_user_fullname.vbs"
 $vbsPath = Join-Path $tempFolder $vbsFileName
 $delaySeconds = 15
