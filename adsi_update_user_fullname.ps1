@@ -1,6 +1,6 @@
 # update_user_fullname.ps1
 # Hosted at: https://dl.cieverse.com/ (GitHub: https://github.com/cienterprises-assist/Workstreams)
-# Purpose: Updates user full name using ADSI, with cleanup.
+# Purpose: Updates user full name using ADSI, with cleanup and popup notification.
 
 # Ensure admin privileges
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -23,18 +23,30 @@ function Write-Log {
 }
 
 # Initialize log
-Write-Log "Starting user full name update at 04:40 AM IST, July 06, 2025"
+Write-Log "Starting user full name update at 04:45 AM IST, July 06, 2025"
 
 # Update full name using ADSI
 try {
     Write-Log "Updating full name for $username to $fullName"
     $user = [ADSI]"WinNT://./$username"
-    $user.FullName = $fullName
-    $user.SetInfo()
-    Write-Log "Successfully updated full name for $username"
+    $existingFullName = $user.FullName.Value
+    if ($existingFullName -eq $fullName) {
+        Write-Log "Full name for $username is already $fullName"
+        $message = "Full name for $username is already set to $fullName."
+    } else {
+        $user.FullName = $fullName
+        $user.SetInfo()
+        Write-Log "Successfully updated full name for $username"
+        $message = "Full name for $username updated to $fullName."
+    }
+    # Show popup
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.MessageBox]::Show($message, "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 }
 catch {
     Write-Log "Error updating full name: $_"
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.MessageBox]::Show("Error updating full name for $username: $_", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
 }
 
 # Delay for visibility
