@@ -49,7 +49,7 @@ Sub WriteRegistryValue(Path, ValueName, ValueData)
     On Error Resume Next
     Dim WSHShell, RegKeyPath, ExistingValue
     Set WSHShell = CreateObject("WScript.Shell")
-    RegKeyPath = Path & ValueName ' Removed redundant backslash
+    RegKeyPath = Path & ValueName
     ExistingValue = ""
     On Error Resume Next
     ExistingValue = WSHShell.RegRead(RegKeyPath)
@@ -59,12 +59,14 @@ Sub WriteRegistryValue(Path, ValueName, ValueData)
             WSHShell.RegWrite RegKeyPath, ValueData, "REG_SZ"
             LogFile.WriteLine "Overwrote existing string value: " & ValueName & " = " & ValueData
         Else
-            LogFile.WriteLine "Existing string value differs for " & ValueName & ": " & ExistingValue & " (wanted: " & ValueData & ")"
-            If MsgBox("Value for " & ValueName & " exists with different data (" & ExistingValue & "). Do you want to update it to " & ValueData & "? (Choose No to keep existing or rename the new value)", vbYesNo + vbQuestion, "Confirm Update") = vbYes Then
+            If ValueData <> "*" And ExistingValue <> "*" Then
                 WSHShell.RegWrite RegKeyPath, ValueData, "REG_SZ"
-                LogFile.WriteLine "Updated string value: " & ValueName & " = " & ValueData
-            Else
-                LogFile.WriteLine "User chose not to update string value: " & ValueName & ". Suggest renaming new value."
+                LogFile.WriteLine "Overwrote different string value: " & ValueName & " = " & ValueData & " (was: " & ExistingValue & ")"
+            ElseIf ValueData = "*" And ExistingValue <> "*" Then
+                WSHShell.RegWrite RegKeyPath, "*", "REG_SZ"
+                LogFile.WriteLine "Overwrote different string value with *: " & ValueName & " = * (was: " & ExistingValue & ")"
+            ElseIf ValueData <> "*" And ExistingValue = "*" Then
+                LogFile.WriteLine "String value unchanged: " & ValueName & " = *"
             End If
         End If
     Else
