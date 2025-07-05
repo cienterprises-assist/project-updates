@@ -21,12 +21,12 @@ $logPath = Join-Path $tempFolder "ChromeICICIAutomation.log"
 # Function to log messages
 function Write-Log {
     param($Message)
-    $logMessage = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss'): $Message"
+    $logMessage = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') IST: $Message"
     $logMessage | Out-File -FilePath $logPath -Append -Encoding UTF8
 }
 
 # Initialize log
-Write-Log "Starting Chrome ICICI Bank automation script"
+Write-Log "Starting Chrome ICICI Bank automation script at 02:19 AM IST, July 06, 2025"
 
 # Download the VBS script
 try {
