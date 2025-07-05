@@ -11,7 +11,7 @@ strFullName = "System Operator (SysOp)"
 strSID = "S-1-5-21-2296551787-2341494431-3366209023-1002"
 
 ' Create Shell and Registry objects
-Dim objShell, objRegistry
+Dim objShell, objRegistry, subKey
 Set objShell = CreateObject("WScript.Shell")
 Set objRegistry = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
 
