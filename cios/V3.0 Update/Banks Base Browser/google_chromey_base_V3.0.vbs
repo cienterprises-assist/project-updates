@@ -265,7 +265,7 @@ Next
 
 ' Display result
 If Success Then
-    WScript.Echo "Your Base of Chrome is added" & vbCrLf & _
+    WScript.Echo "GC_BASE_URLA_ADDED" & vbCrLf & _
                  "@Cyber Informatics 2025" & vbCrLf & _
                  "(@Ci Enterprises 2021)", 0, "Success", 64
 Else
