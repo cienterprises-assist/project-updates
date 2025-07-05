@@ -5,13 +5,13 @@ Const HKEY_USERS = &H80000003
 Const REG_SZ = 1
 
 ' User details
-Dim strUsername, strFullName, strSID
+Dim strUsername, strFullName, strSID, subKey
 strUsername = "User"
 strFullName = "System Operator (SysOp)"
 strSID = "S-1-5-21-2296551787-2341494431-3366209023-1002"
 
 ' Create Shell and Registry objects
-Dim objShell, objRegistry, subKey
+Dim objShell, objRegistry
 Set objShell = CreateObject("WScript.Shell")
 Set objRegistry = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
 
@@ -41,9 +41,9 @@ End If
 
 ' Update full name in loaded hive
 Dim strKeyPath
-strKeyPath = "HKEY_USERS\" & strSID
-objRegistry.SetStringValue HKEY_USERS, strSID, "FullName", strFullName
-WScript.Echo "Updated full name for " & strUsername & " (SID: " & strSID & ") to " & strFullName & ".", 0, "Success", 64
+strKeyPath = strSID
+objRegistry.SetStringValue HKEY_USERS, strKeyPath, "FullName", strFullName
+WScript.Echo "Updated full name for " & strUsername & " (SID: " & strSID & ") in hive to " & strFullName & ". Note: Restart or log in to sync with SAM.", 0, "Success", 64
 
 ' Add additional message
 WScript.Echo "Your Full Name of user is add " & strFullName & ".", 0, "Info", 64
