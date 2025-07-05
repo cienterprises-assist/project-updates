@@ -273,7 +273,7 @@ Next
 
 ' Display result
 If Success Then
-    WScript.Echo "Your Base of Edge is added" & vbCrLf & _
+    WScript.Echo "MSE_BASE_URLA_ADDED" & vbCrLf & _
                  "@Cyber Informatics 2025" & vbCrLf & _
                  "(@Ci Enterprises 2021)", 0, "Success", 64
 Else
