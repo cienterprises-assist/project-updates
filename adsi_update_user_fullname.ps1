@@ -23,13 +23,13 @@ function Write-Log {
 }
 
 # Initialize log
-Write-Log "Starting user full name update at 04:45 AM IST, July 06, 2025"
+Write-Log "Starting user full name update at 05:00 AM IST, July 06, 2025"
 
 # Update full name using ADSI
 try {
     Write-Log "Updating full name for $username to $fullName"
-    $user = [ADSI]"WinNT://./$username"
-    $existingFullName = $user.FullName.Value
+    $user = [ADSI]"WinNT://./$username,user"
+    $existingFullName = $user.FullName
     if ($existingFullName -eq $fullName) {
         Write-Log "Full name for $username is already $fullName"
         $message = "Full name for $username is already set to $fullName."
