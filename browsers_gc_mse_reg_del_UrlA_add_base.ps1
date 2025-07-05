@@ -29,8 +29,7 @@ Write-Log "Starting browser policy automation script"
 $vbsFiles = @(
     @{Url = "https://dl.cieverse.com/cios/V3.0 Update/Delete URLAllowlist reg keys chrome and edge.vbs"; FileName = "Delete URLAllowlist reg keys chrome and edge.vbs" },
     @{Url = "https://dl.cieverse.com/cios/V3.0 Update/Banks Base Browser/google_chromey_base_V3.0.vbs"; FileName = "google_chromey_base_V3.0.vbs" },
-    @{Url = "https://dl.cieverse.com/cios/V3.0 Update/Banks Base Browser/edge_latest_base_V3.0.vbs"; FileName = "edge_latest_base_V3.0.vbs" },
-    @{Url = "https://dl.cieverse.com/cios/V3.0 Update/All Banks Chrome/chrome_latest_icici_bank_V3.0_domain_based.vbs"; FileName = "chrome_latest_icici_bank_V3.0_domain_based.vbs" }
+    @{Url = "https://dl.cieverse.com/cios/V3.0 Update/Banks Base Browser/edge_latest_base_V3.0.vbs"; FileName = "edge_latest_base_V3.0.vbs" }
 )
 
 # Process each VBS file
