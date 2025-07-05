@@ -21,10 +21,10 @@ If Err.Number <> 0 Then
     WScript.Quit 1
 End If
 On Error GoTo 0
-LogFile.WriteLine "Chrome URLAllowlist Update Log - " & Now
+LogFile.WriteLine "Chrome URLAllowlist Update Log - " & Now & " (IST)"
 
 ' String Value Names and Data
-Dim ValueNames(8), ValueData(8)
+Dim ValueNames(9), ValueData(9)
 ValueNames(0) = "501"
 ValueData(0) = "neocaps.icicibank.com"
 ValueNames(1) = "502"
@@ -55,26 +55,18 @@ Sub WriteRegistryValue(Path, ValueName, ValueData)
     ExistingValue = WSHShell.RegRead(RegKeyPath)
     If Err.Number = 0 Then
         If ExistingValue = ValueData Then
-            ' Same value, overwrite silently
             WSHShell.RegWrite RegKeyPath, ValueData, "REG_SZ"
             LogFile.WriteLine "Overwrote existing string value: " & ValueName & " = " & ValueData
         Else
-            If ValueData <> "*" And ExistingValue <> "*" Then
-                WSHShell.RegWrite RegKeyPath, ValueData, "REG_SZ"
-                LogFile.WriteLine "Overwrote different string value: " & ValueName & " = " & ValueData & " (was: " & ExistingValue & ")"
-            ElseIf ValueData = "*" And ExistingValue <> "*" Then
-                WSHShell.RegWrite RegKeyPath, "*", "REG_SZ"
-                LogFile.WriteLine "Overwrote different string value with *: " & ValueName & " = * (was: " & ExistingValue & ")"
-            ElseIf ValueData <> "*" And ExistingValue = "*" Then
-                LogFile.WriteLine "String value unchanged: " & ValueName & " = *"
-            End If
+            WSHShell.RegWrite RegKeyPath, ValueData, "REG_SZ"
+            LogFile.WriteLine "Overwrote different string value: " & ValueName & " = " & ValueData & " (was: " & ExistingValue & ")"
         End If
     Else
         WSHShell.RegWrite RegKeyPath, ValueData, "REG_SZ"
         LogFile.WriteLine "Wrote new string value: " & ValueName & " = " & ValueData
     End If
     If Err.Number <> 0 Then
-        WScript.Echo "Error writing to registry: " & Err.Description, 0, "Error", 16
+        LogFile.WriteLine "Error writing to registry for " & ValueName & ": " & Err.Description & " (Error Code: " & Err.Number & ")"
     End If
     Set WSHShell = Nothing
     On Error GoTo 0
