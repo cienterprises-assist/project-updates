@@ -1,6 +1,6 @@
 # update_user_fullname.ps1
-# Hosted at: https://dl.cieverse.com/ (GitHub: https://github.com/cienterprises-assist/Workstreams)
-# Purpose: Updates user full name using ADSI, with cleanup and popup notification.
+# Hosted at: [invalid url, do not cite] (GitHub: [invalid url, do not cite])
+# Purpose: Updates user full name using Set-LocalUser, with popup notification.
 
 # Ensure admin privileges
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -23,19 +23,17 @@ function Write-Log {
 }
 
 # Initialize log
-Write-Log "Starting user full name update at 05:00 AM IST, July 06, 2025"
+Write-Log "Starting user full name update at 05:05 AM IST, July 06, 2025"
 
-# Update full name using ADSI
+# Update full name using Set-LocalUser
 try {
     Write-Log "Updating full name for $username to $fullName"
-    $user = [ADSI]"WinNT://./$username,user"
-    $existingFullName = $user.FullName
-    if ($existingFullName -eq $fullName) {
+    $user = Get-LocalUser -Name $username -ErrorAction Stop
+    if ($user.FullName -eq $fullName) {
         Write-Log "Full name for $username is already $fullName"
         $message = "Full name for $username is already set to $fullName."
     } else {
-        $user.FullName = $fullName
-        $user.SetInfo()
+        Set-LocalUser -Name $username -FullName $fullName -ErrorAction Stop
         Write-Log "Successfully updated full name for $username"
         $message = "Full name for $username updated to $fullName."
     }
