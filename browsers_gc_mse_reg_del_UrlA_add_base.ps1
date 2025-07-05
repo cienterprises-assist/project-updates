@@ -1,4 +1,4 @@
-# browsers_gc_mse_reg_del_UrlA_add_base_add_icici_chrome.ps1
+# browsers_gc_mse_reg_del_UrlA_add_base.ps1
 # Hosted at: https://dl.cieverse.com/ (GitHub: https://github.com/cienterprises-assist/Workstreams)
 # Purpose: Automates deletion and configuration of Chrome/Edge URLAllowlist and base policies, with cleanup.
 
@@ -106,6 +106,6 @@ catch {
 # Show final popup
 Write-Log "Displaying cleanup successful popup"
 $wshell = New-Object -ComObject WScript.Shell
-$wshell.Popup("Cleanup successful", 0, "Success", 64)
+$wshell.Popup("URLA_OLD_RM_URLA_BASE_MSE_GC_ADD_CLEANUP Completed", 0, "Success", 64)
 
 Write-Log "Script execution completed"
